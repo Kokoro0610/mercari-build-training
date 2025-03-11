@@ -19,25 +19,34 @@ def override_get_db():
 
 @pytest.fixture(autouse=True)
 def db_connection():
-    # Before the test is done, create a test database
+    # テスト用のDB接続を作成
     conn = sqlite3.connect(test_db)
     cursor = conn.cursor()
+    # categories テーブルの作成
+    cursor.execute(
+        """CREATE TABLE IF NOT EXISTS categories (
+            id INTEGER PRIMARY KEY,
+            name TEXT UNIQUE
+        )"""
+    )
+    # items テーブルの作成（本番のスキーマに合わせる場合）
     cursor.execute(
         """CREATE TABLE IF NOT EXISTS items (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		name VARCHAR(255),
-		category VARCHAR(255)
-	)"""
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            category_id INTEGER,
+            image_name TEXT,
+            FOREIGN KEY (category_id) REFERENCES categories(id)
+        )"""
     )
     conn.commit()
-    conn.row_factory = sqlite3.Row  # Return rows as dictionaries
-
+    conn.row_factory = sqlite3.Row  # 辞書型の結果を返す
     yield conn
-
     conn.close()
-    # After the test is done, remove the test database
+    # テスト終了後、テスト用DBファイルを削除
     if test_db.exists():
-        test_db.unlink() # Remove the file
+        test_db.unlink()
+
 
 app.dependency_overrides[get_db] = override_get_db
 
