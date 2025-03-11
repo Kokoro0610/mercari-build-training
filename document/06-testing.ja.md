@@ -104,134 +104,6 @@ FAIL
 ## テスト戦略
 テストの方針は言語、フレームワークによって異なります。本節では、GoとPythonにおけるテスト戦略について説明し、実際にテストを書く方法について説明します。
 
-### Go
-
-**:book: Reference**
-
-- (EN)[testing package - testing - Go Packages](https://pkg.go.dev/testing)
-- (EN)[Add a test - The Go Programming Language](https://go.dev/doc/tutorial/add-a-test)
-- (EN)[Go Wiki: Go Test Comments - The Go Programming Language](https://go.dev/wiki/TestComments)
-- (EN)[Go Wiki: TableDrivenTests - The Go Programming Language](https://go.dev/wiki/TableDrivenTests)
-
-Goはテストに関連する機能を提供する `testing` と呼ばれる標準パッケージを有しており、 `$ go test` コマンドによってテストを行うことが可能です。Goが提示しているテストの方針については、[Go Wiki: Go Test Comments](https://go.dev/wiki/TestComments)を参照してください。言語としての一般的な方針が書かれています。これらの方針は必須という訳ではないので、問題のない範囲で倣うのが良いと思います。
-
-では、実際に先ほどのコードの単体テストから書いてみましょう。Goではテストしたいケースを最初に列挙して、テーブルのように順番にテストするテーブルテスト(Table-Driven Test)を推奨しています。テストケースは基本的にスライスかmapで宣言することが多々ありますが、順序性が必要とされるケースでなければ、基本的にmapを利用すると良いと思います。実行順序に依存しないテストケースを書くことで、テスト対象の機能の振る舞いを、より強固に保証することが可能になるためです。
-
-```go
-func TestSayHello(t *testing.T) {
-    cases := map[string]struct{
-        name string
-        want string
-    }{
-        "Alice": {
-            name: "Alice",
-            want: "Hello, Alice!"
-        }
-        "empty": {
-            name: "",
-            want: "Hello!"
-        }
-    }
-
-    for name, tt := range cases {
-        t.Run(name, func(t *testing.T) {
-            got := sayHello(tt.name)
-
-            // 期待する返り値と実際に得た値が同じか確認
-            if tt.want != got {
-                // 期待する返り値と実際に得た値が異なる場合は、エラーを表示
-                t.Errorf("unexpected result of sayHello: want=%v, got=%v", tt.want, got)
-            }
-        })
-    }
-}
-```
-
-このように、テストケースをまとめて書くことで、一目で入力と想定される出力を確認することが出来ます。仮に、対象の関数/メソッドの振る舞いを全く知らないでコードリーディングする必要がある場合、テストコードを参考にして振る舞いを理解するヒントとして利用することもできます。
-
-また、このようなテストも想定して、引数の設計を考えることも大事です。例えば、次のように、時間に応じて挨拶を変えるようにしたとします。
-
-```go
-func sayHello(name string) string {
-    now := time.Now()
-    currentHour := now.Hour()
-
-    if 6 <= currentHour && currentHour < 10 {
-        return fmt.Sprintf("Good morning, %s!", name)
-    }
-    if 10 <= currentHour && currentHour < 18 {
-        return fmt.Sprintf("Hello, %s!", name)
-    }
-    return fmt.Sprintf("Good evening, %s!", name)
-}
-```
-
-この場合、各時間帯の全てでテストをするためには、それぞれの時間にテストを実施しなければなりません。これはテスト的に適していない設計と言えます。テストできるようにするために、以下のように関数を書き換えることが出来ます。
-
-```go
-func sayHello(name string, now time.Time) string {
-    currentHour := now.Hour()
-
-    if 6 <= currentHour && currentHour < 10 {
-        return fmt.Sprintf("Good morning, %s!", name)
-    }
-    if 10 <= currentHour && currentHour < 18 {
-        return fmt.Sprintf("Hello, %s!", name)
-    }
-    return fmt.Sprintf("Good evening, %s!", name)
-}
-```
-
-これにより、現在時刻を自由に設定できるようになったため、以下のように各時間帯の振る舞いをテストできるようになります。
-
-```go
-func TestSayHelloWithTime(t *testing.T) {
-    type args struct {
-        name string
-        now time.Time
-    }
-    cases := map[string]struct{
-        args
-        want string
-    }{
-        "Morning Alice": {
-            args: args{
-                name: "Alice",
-                now: time.Date(2024, 1, 1, 9, 0, 0, 0, time.UTC),
-            },
-            want: "Good morning, Alice!",
-        },
-        "Hello Bob": {
-            args: args{
-                name: "Bob",
-                now: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-            },
-            want: "Hello, Bob!",
-        },
-        "Night Charie": {
-            args: args{
-                name: "Charie",
-                now: time.Date(2024, 1, 1, 20, 0, 0, 0, time.UTC),
-            },
-            want: "Good evening, Charie!",
-        },
-    }
-
-    for name, tt := range cases {
-        t.Run(name, func(t *testing.T) {
-            got := sayHello(tt.name, tt.now)
-
-            // 期待する返り値と実際に得た値が同じか確認
-            if tt.want != got {
-                // 期待する返り値と実際に得た値が異なる場合は、エラーを表示
-                t.Errorf("unexpected result of sayHello: want=%v, got=%v", tt.want, got)
-            }
-        })
-    }
-}
-```
-
-このようにして、テストのことも意識したコードをかけると良いですね。
 
 ### Python
 
@@ -331,16 +203,6 @@ def test_say_hello_simple(name, now, expected):
 想定されるリクエストは、 `name` および `category` を必要とするはずです。
 そのため、そのデータが欠けている時にエラーを返すべきです。これをテストしてみましょう。
 
-### Go
-`server_test.go` を見てみましょう。
-
-現在、AddItemのリクエストが来た時に全ての値が含まれている場合はOK、欠けている値がある場合はNGとしたいです。
-そのようなテストケースを書いてみましょう。
-
-**:beginner: Point**
-
-- このテストは何を検証しているでしょうか？
-- `t.Error()` と `t.Fatal()` には、どのような違いがあるでしょうか？
 
 ### Python(Read Only)
 
@@ -354,26 +216,6 @@ GoのAPI実装と異なり、FastAPIというフレームワークを活用し�
 
 ハンドラのテストを書く際は、STEP 6-1と同様に、想定される値と引数を比較すれば良さそうです。
 
-### Go
-
-**:book: Reference**
-
-- (EN)[httptest package - net/http/httptest - Go Packages](https://pkg.go.dev/net/http/httptest)
-- (JA)[Goのtestを理解する - httptestサブパッケージ編 - My External Storage](https://budougumi0617.github.io/2020/05/29/go-testing-httptest/)
-
-Goでは、 `httptest` と呼ばれるハンドラをテストするためのライブラリを用いてみましょう。
-
-今回は、STEP6-1の時と異なり、比較する部分のコードが書かれていません。
-
-- このハンドラでテストしたいのは何でしょうか？
-- それが正しい振る舞いをしていることはどのようにして確認できるでしょうか？
-
-ロジックが思いついたら実装してみましょう。
-
-**:beginner: Point**
-
-- 他の方が書いたテストコードを確認してみましょう
-- httptestパッケージの既存コードで何をしているか確認してみましょう
 
 ### Python
 
@@ -396,22 +238,6 @@ Goと同じように以下のことを意識しながら、テストコードを
 例えば、今回のデータベースへのアイテム登録の部分を考えてみましょう。テストでは、データベースへのアイテム登録に成功する時と失敗する時を両方テストしたいはずです。しかし、これらのケースを意図的に引き起こすことは少々手間がかかります。また、実際のデータベースを利用すると、データベース側の問題でテストがflakyになる可能性もあります。
 
 そこで、実際にデータベースのロジックを用いるのではなく、想定された返り値を返すようなモックを用いることで、あらゆるケースをテストすることが可能です。
-
-### Go
-
-**:book: Reference**
-
-- (EN) [mock module - go.uber.org/mock - Go Packages](https://pkg.go.dev/go.uber.org/mock)
-
-Goには様々なモックライブラリがありますが、今回は `gomock` を利用します。
-`gomock` の簡単な利用方法はドキュメントや先駆者のブログを参照してください。
-
-このモックを用いて、永続化の処理が成功するパターンと失敗するパターンの両方をテストしてみましょう。
-
-**:beginner: Point**
-
-- モックを満たすためにinterfaceを用いていますが、interfaceのメリットについて考えてみましょう
-- モックを利用するメリットとデメリットについて考えてみましょう
 
 ### Python (Read Only)
 
@@ -436,14 +262,6 @@ Pythonのmock用のライブラリとしては標準搭載された`unittest.moc
 STEP 6-3におけるモックを実際のデータベースに置き換えたテストを書いてみましょう。
 
 モックは先述の通りあらゆるケースをテストすることが可能ですが、実際の環境で動かしている訳ではありません。そのため、実際のデータベース上では動かない、ということもしばしばあります。そこで、テスト用にデータベースを用意して、そのデータベースを利用してテストを実施しましょう。
-
-### Go
-Goでは、テスト用にデータベース用のファイルを作成して、そこに処理を足していく方針を取ります。
-
-実際のデータベースで処理を行った後、データベース内のデータが想定通り変更されていることを確かめる必要があります。
-
-- アイテム登録後のデータベースの状態はどうなっているはずでしょうか？
-- それが正しい振る舞いをしていることはどのようにして確認できるでしょうか？
 
 ### Python
 
