@@ -53,5 +53,3 @@ The following icons indicate pointers for
 * MercariではBackend開発にGoを利用しています。挑戦できそうな方はこちらを選んでいただくとよりMercariに近い環境で開発いただけます。
 * Pythonは比較的簡単にかけるプログラミング言語です。Pythonを選んだほうが全体のフローの理解がしやすいかと思われます。
 
-aaaaaa
-bbbbbb
