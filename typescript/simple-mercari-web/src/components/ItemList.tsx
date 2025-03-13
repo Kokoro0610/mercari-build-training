@@ -29,20 +29,25 @@ export const ItemList = ({ reload, onLoadCompleted }: Prop) => {
   }, [reload, onLoadCompleted]);
 
   return (
-    <div>
-      {items?.map((item) => {
-        return (
-          <div key={item.id} className="ItemList">
-            {/* TODO: Task 2: Show item images */}
-            <img src={`http://localhost:9000/image/${item.id}.jpg`} alt={item.name} />
-            <p>
-              <span>Name: {item.name}</span>
-              <br />
-              <span>Category: {item.category}</span>
-            </p>
-          </div>
-        );
-      })}
+    <div className="ItemsGrid">
+      {items?.map((item) => (
+        <div key={item.id} className="ItemList">
+          <img
+            src={`http://localhost:9000/image/${item.id}.jpg`}
+            alt={item.name}
+            style={{
+              width: "150px",
+              height: "150px",
+              objectFit: "cover"
+            }}
+          />
+          <p>
+            <span>Name: {item.name}</span>
+            <br />
+            <span>Category: {item.category}</span>
+          </p>
+        </div>
+      ))}
     </div>
-  );
+  );  
 };

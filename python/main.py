@@ -205,7 +205,6 @@ def get_item(item_id: int, db: sqlite3.Connection = Depends(get_db)):
     return dict(row)
 
 
-# GET-/image/{image_name} リクエストで呼び出され、指定された画像を返す
 @app.get("/image/{item_id}.jpg")
 async def get_image_by_item_id(item_id: int, db: sqlite3.Connection = Depends(get_db)):
     # DB から item_id に対応する image_name を取得する
