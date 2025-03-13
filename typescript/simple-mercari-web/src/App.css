@@ -1,18 +1,37 @@
+/* すべての要素の余白をリセット */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* body 全体を背景色 #222427 に */
+html, body {
+  margin: 0;
+  padding: 0;
+  background-color: #222427; /* 全体背景を指定したい場合 */
+}
+
+/* App コンテナ */
 .App {
+  width: 100%;
+  min-height: 100vh;
   text-align: center;
 }
 
+/* タイトルやフォームなどのヘッダ部分 */
 .Title {
   background-color: #222427;
   min-height: 8vh;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: left;
+  align-items: center;      /* 縦方向の中央寄せ */
+  justify-content: center;  /* 横方向の中央寄せ */
   font-size: calc(10px + 1vmin);
   color: white;
 }
 
+
+/* リスト投稿フォーム部分 */
 .Listing {
   background-color: #222427;
   min-height: 8vh;
@@ -24,9 +43,9 @@
   color: white;
 }
 
+/* 個々のアイテム枠 */
 .ItemList {
   background-color: #222427;
-  min-height: 8vh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -35,15 +54,24 @@
   color: white;
 }
 
-.App-link {
-  color: #61dafb;
+/* グリッドコンテナ */
+.ItemsGrid {
+  /* 横幅いっぱいに広げる */
+  width: 100%;
+  display: grid;
+  /* デフォルトは 1 列表示 */
+  grid-template-columns: 1fr;
+
+  /* アイテム同士の隙間 */
+  gap: 1rem;
+  /* コンテナ内側の余白 */
+  padding: 1rem;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
+/* 画面幅が 624px 以上になったら 3 列にする */
+@media screen and (min-width: 624px) {
+  .ItemsGrid {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
+
