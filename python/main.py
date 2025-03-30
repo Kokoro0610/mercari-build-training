@@ -26,12 +26,14 @@ def get_db():
     if not db_path.exists():
         yield
 
-    conn = sqlite3.connect(db_path)
+    # check_same_thread=False を追加
+    conn = sqlite3.connect(db_path, check_same_thread=False)
     conn.row_factory = sqlite3.Row  # Return rows as dictionaries
     try:
         yield conn
     finally:
         conn.close()
+
 
 
 # STEP 5-1: set up the database connection
@@ -173,7 +175,7 @@ def get_items(db: sqlite3.Connection = Depends(get_db)):
                             items.id AS id, 
                             items.name AS name, 
                             categories.name AS category, 
-                            items.image_name AS items_name 
+                            items.image_name AS image_name 
                         FROM items
                         JOIN categories
                         ON items.category_id = categories.id
@@ -203,20 +205,24 @@ def get_item(item_id: int, db: sqlite3.Connection = Depends(get_db)):
     return dict(row)
 
 
-# GET-/image/{image_name} リクエストで呼び出され、指定された画像を返す
-@app.get("/image/{image_name}")
-async def get_image(image_name: str):
-    # 画像ファイルのパスを生成する
+@app.get("/image/{item_id}.jpg")
+async def get_image_by_item_id(item_id: int, db: sqlite3.Connection = Depends(get_db)):
+    # DB から item_id に対応する image_name を取得する
+    cursor = db.execute("SELECT image_name FROM items WHERE id = ?", (item_id,))
+    row = cursor.fetchone()
+    if row is None:
+        raise HTTPException(status_code=404, detail="Item not found")
+    
+    image_name = row["image_name"]
     image_file_path = images / image_name
 
-    if not image_name.endswith(".jpg"):
-        raise HTTPException(status_code=400, detail="Image path does not end with .jpg")
-
+    # 画像ファイルが存在しなければデフォルト画像を返す
     if not image_file_path.exists():
         logger.debug(f"Image not found: {image_file_path}")
         image_file_path = images / "default.jpg"
 
     return FileResponse(image_file_path)
+
 
 
 
