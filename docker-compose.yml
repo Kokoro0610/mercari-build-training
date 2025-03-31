@@ -1,0 +1,28 @@
+version: "3.9"
+services:
+  #back
+  app:
+    build:
+      context: ./python
+      dockerfile: Dockerfile
+    ports:
+      - "9000:9000"
+    environment:
+      - FRONT_URL=http://localhost:3000
+    networks:
+      - build-network
+  #front
+  web:
+    build:
+      context: ./typescript/simple-mercari-web
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://app:9000
+    networks:
+      - build-network
+  
+networks:
+  build-network:
+    driver: bridge
